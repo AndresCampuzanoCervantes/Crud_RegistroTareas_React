@@ -1,4 +1,5 @@
 import React from 'react'
+import {firebase} from '../firebase'
 
 const Formulario = () => {
     const [modoEdicion,setModoEdicion] = React.useState(false);
@@ -10,6 +11,7 @@ const Formulario = () => {
     const [fechaOptima,setFechaOptima] = React.useState('');
     const [fechaLimite,setFechaLimite] = React.useState('');
     const [descripcion,setDescripcion] = React.useState('');
+    const [listaTareas,setListaTareas] = React.useState([]);
 
     const cancelar = ()=>{
         setModoEdicion(false)
@@ -19,7 +21,7 @@ const Formulario = () => {
 
     }
 
-    const registrarTarea = (e)=>{
+    const registrarTarea = async (e)=>{
         e.preventDefault()
         if (tarea==='' || tarea.trim()==='') {
             setError('Debe ingresar la tarea a registrar')
@@ -51,6 +53,35 @@ const Formulario = () => {
         }
 
         setError('')
+        try {
+            const db=firebase.firestore()
+            const NuevaTarea = {
+                tarea,
+                personaCargo,
+                creadoPor,
+                fechaRegistro,
+                fechaOptima,
+                fechaLimite,
+                descripcion
+            }
+
+            await db.collection('ListaTareas').add(NuevaTarea);
+            setListaTareas([...listaTareas,NuevaTarea])
+
+            setTarea('')
+            setPersonaCargo('')
+            setCreadoPor('')
+            setFechaRegistro('')
+            setFechaOptima('')
+            setFechaLimite('')
+            setDescripcion('')
+            
+            console.log(NuevaTarea)
+        } catch (error) {
+            console.error(error)
+        }
+       
+        
     }
   return (
     <>
