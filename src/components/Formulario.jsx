@@ -13,6 +13,23 @@ const Formulario = () => {
     const [descripcion,setDescripcion] = React.useState('');
     const [listaTareas,setListaTareas] = React.useState([]);
 
+    React.useEffect(() => {
+        const obtenerListaTareas = async()=> {
+            try {
+                const db = firebase.firestore()
+                const data = await db.collection('ListaTareas').get()
+                const arrayData= data.docs.map(item => ({
+                    id:item.id,...item.data()}))
+                
+                setListaTareas(arrayData);
+                console.log(arrayData);
+            } catch (error) {
+                console.error(error)
+            }
+        }
+        obtenerListaTareas();
+    },[])
+
     const cancelar = ()=>{
         setModoEdicion(false)
     }
@@ -75,8 +92,7 @@ const Formulario = () => {
             setFechaOptima('')
             setFechaLimite('')
             setDescripcion('')
-            
-            console.log(NuevaTarea)
+
         } catch (error) {
             console.error(error)
         }
