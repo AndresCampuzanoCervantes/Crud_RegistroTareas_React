@@ -1,5 +1,7 @@
 import React from 'react'
 import {firebase} from '../firebase'
+import Tareas from './Tareas';
+
 
 const Formulario = () => {
     const [modoEdicion,setModoEdicion] = React.useState(false);
@@ -23,6 +25,7 @@ const Formulario = () => {
                 
                 setListaTareas(arrayData);
                 console.log(arrayData);
+                console.log(arrayData[0])
             } catch (error) {
                 console.error(error)
             }
@@ -35,6 +38,10 @@ const Formulario = () => {
     }
     
     const editarTareas = ()=>{
+
+    }
+
+    const eliminarTareas = ()=>{
 
     }
 
@@ -104,7 +111,7 @@ const Formulario = () => {
         <div className='container mt-3'>
             <h1 className='text-center'>Registro de Tareas</h1>
             <div className='row'>
-                <div className='col-4 bg bg-info text-dark rounded py-2 my-2'>
+                <div className='col-4 bg  rounded py-2 my-2 fondo' >
                     <h4 className='text-center'>
                         {
                             modoEdicion ? 'Editar Tarea' : 'Agregar Tarea'
@@ -175,11 +182,11 @@ const Formulario = () => {
                             (
                                 <div className='text-center'>
                                     <button 
-                                    className='btn btn-warning btn-block mx-2 col-5'
+                                    className='btn btn-warning btn-block mx-2 col-5 my-2'
                                     type='submit'
                                     >Editar</button>
                                     <button 
-                                    className='btn btn-danger btn-block mx-2 col-5'
+                                    className='btn btn-danger btn-block mx-2 col-5 my-2'
                                     onClick={() => cancelar()}
                                     >Cancelar</button>
                                 </div>
@@ -187,13 +194,27 @@ const Formulario = () => {
                             :
 
                             <button 
-                            className='btn btn-primary btn-block my-2 col-12'
+                            className='btn btn-dark btn-block my-2 col-12'
                             type='submit'
                             >Agregar</button>
 
                         }
                     </form>
                 </div>
+               
+
+               {
+                   listaTareas.map( item=>(
+                    <div className="col-7 bg rounded my-2 float-end">
+                        <Tareas
+                        tarea={item}
+                        eliminar={eliminarTareas}
+                        editar={editarTareas}
+                        />
+                    </div>
+                   ))
+               }
+                
             </div>
         </div>
     </>
