@@ -56,8 +56,68 @@ const Formulario = () => {
         setFechaLimite(tarea.fechaLimite)
         setDescripcion(tarea.descripcion)
     }
-    const editarTareas = ()=>{
 
+    const editarTareas = async  (e)=>{
+        e.preventDefault()
+        if (tarea==='' || tarea.trim()==='') {
+            setError('Debe ingresar la tarea a registrar')
+            return;
+        }
+        if (personaCargo==='' || personaCargo.trim()==='') {
+            setError('Debe ingresar la persona a cargo de la tarea')
+            return;
+        }
+        if (creadoPor==='' || creadoPor.trim()==='') {
+            setError('Debe ingresar la persona que reporta la incidencia')
+            return;
+        }
+        if (fechaRegistro==='' || fechaRegistro.trim()==='') {
+            setError('Debe ingresar la fecha de registro')
+            return;
+        }
+        if (fechaOptima==='' || fechaOptima.trim()==='') {
+            setError('Debe ingresar la fecha optima')
+            return;
+        }
+        if (fechaLimite==='' || fechaLimite.trim()==='') {
+            setError('Debe ingresar la fecha limite')
+            return;
+        }
+        if (descripcion==='' || descripcion.trim()==='') {
+            setError('Debe ingresar la descripcion')
+            return;
+        }
+
+        setError('')
+        try{
+            const tareaEditada ={
+                tarea,
+                personaCargo,
+                creadoPor,
+                fechaRegistro,
+                fechaOptima,
+                fechaLimite,
+                descripcion
+            }
+            const db = firebase.firestore()
+            await db.collection('ListaTareas').doc(id).update(tareaEditada)
+        
+             const arrayEditado = listaTareas.map(
+                item => item.id ===id ? tareaEditada: item
+            )
+    
+            setListaTareas(arrayEditado)
+            setTarea('')
+            setPersonaCargo('')
+            setCreadoPor('')
+            setFechaRegistro('')
+            setFechaOptima('')
+            setFechaLimite('')
+            setDescripcion('')
+            setModoEdicion(false)
+         }catch(error){
+             console.error(error)
+         }
     }
 
     const eliminarTareas = async (id)=>{
@@ -132,6 +192,7 @@ const Formulario = () => {
        
         
     }
+    
   return (
     <>
         <div className='container mt-3'>
