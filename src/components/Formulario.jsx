@@ -6,6 +6,7 @@ import Tareas from './Tareas';
 const Formulario = () => {
     const [modoEdicion,setModoEdicion] = React.useState(false);
     const [error,setError] = React.useState('');
+    const [id,setId] = React.useState('');
     const [tarea,setTarea] = React.useState('');
     const [personaCargo,setPersonaCargo] = React.useState('');
     const [creadoPor,setCreadoPor] = React.useState('');
@@ -24,8 +25,6 @@ const Formulario = () => {
                     id:item.id,...item.data()}))
                 
                 setListaTareas(arrayData);
-                console.log(arrayData);
-                console.log(arrayData[0])
             } catch (error) {
                 console.error(error)
             }
@@ -35,14 +34,41 @@ const Formulario = () => {
 
     const cancelar = ()=>{
         setModoEdicion(false)
+        setId('')
+        setError('')
+        setTarea('')
+        setPersonaCargo('')
+        setCreadoPor('')
+        setFechaRegistro('')
+        setFechaOptima('')
+        setFechaLimite('')
+        setDescripcion('')
     }
     
+    const editar = (tarea)=>{
+        setModoEdicion(true)
+        setId(tarea.id)
+        setTarea(tarea.tarea)
+        setPersonaCargo(tarea.personaCargo)
+        setCreadoPor(tarea.creadoPor)
+        setFechaRegistro(tarea.fechaRegistro)
+        setFechaOptima(tarea.fechaOptima)
+        setFechaLimite(tarea.fechaLimite)
+        setDescripcion(tarea.descripcion)
+    }
     const editarTareas = ()=>{
 
     }
 
-    const eliminarTareas = ()=>{
-
+    const eliminarTareas = async (id)=>{
+        try {
+            const db = firebase.firestore()
+            await db.collection('ListaTareas').doc(id).delete()
+            const aux = listaTareas.filter(item =>item.id!==id)
+            setListaTareas(aux)
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     const registrarTarea = async (e)=>{
@@ -110,8 +136,8 @@ const Formulario = () => {
     <>
         <div className='container mt-3'>
             <h1 className='text-center'>Registro de Tareas</h1>
-            <div className='row'>
-                <div className='col-4 bg  rounded py-2 my-2 fondo' >
+            <div className='d-flex flex-row'>
+                <div className='col-4 bg  rounded py-2 my-2 px-3 mx-3 fondo' >
                     <h4 className='text-center'>
                         {
                             modoEdicion ? 'Editar Tarea' : 'Agregar Tarea'
@@ -201,20 +227,19 @@ const Formulario = () => {
                         }
                     </form>
                 </div>
-               
-
-               {
-                   listaTareas.map( item=>(
-                    <div className="col-7 bg rounded my-2 float-end">
-                        <Tareas
-                        tarea={item}
-                        eliminar={eliminarTareas}
-                        editar={editarTareas}
-                        />
-                    </div>
-                   ))
-               }
-                
+                <div className="col-7 bg rounded my-2 float-end">
+                {
+                    listaTareas.map( item=>(
+                        
+                            <Tareas
+                            tarea={item}
+                            eliminar={eliminarTareas}
+                            editar={editar}
+                            />
+                        
+                    ))
+                }
+                </div>
             </div>
         </div>
     </>
