@@ -3,43 +3,58 @@ import { firebase } from '../firebase'
 
 
 const Formulario = () => {
+    const formatDate = (date) => {
+        let d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+        if (month.length < 2)
+            month = '0' + month;
+        if (day.length < 2)
+            day = '0' + day;
+
+        return [year, month, day].join('-');
+    }
+
     const [modoEdicion, setModoEdicion] = React.useState(false);
     const [error, setError] = React.useState('');
     const [id, setId] = React.useState('');
     const [tarea, setTarea] = React.useState('');
-    const [personaCargo, setPersonaCargo] = React.useState('');
-    const [creadoPor, setCreadoPor] = React.useState('');
-    const [fechaRegistro, setFechaRegistro] = React.useState(new Date());
+    const [responsable, setResponsable] = React.useState('');
+    const [supervisor, setSupervisor] = React.useState('');
+    const [fechaRegistro, setFechaRegistro] = React.useState(formatDate(new Date()));
     const [fechaOptima, setFechaOptima] = React.useState('');
     const [fechaLimite, setFechaLimite] = React.useState('');
     const [descripcion, setDescripcion] = React.useState('');
     const [listaTareas, setListaTareas] = React.useState([]);
+    const [banderaCrear,setBanderaCrear] = React.useState(0);
 
     React.useEffect(() => {
         const obtenerListaTareas = async () => {
             try {
                 const db = firebase.firestore()
                 const data = await db.collection('ListaTareas').get()
-                const arrayData = data.docs.map(item => ({
+                const arrayData = data.docs.filter(item => !item.completado).map(item => ({
                     id: item.id, ...item.data()
                 }))
-
+                console.log(arrayData)
                 setListaTareas(arrayData);
             } catch (error) {
                 console.error(error)
             }
         }
         obtenerListaTareas();
-    }, [])
+    }, [banderaCrear])
 
     const cancelar = () => {
         setModoEdicion(false)
         setId('')
         setError('')
         setTarea('')
-        setPersonaCargo('')
-        setCreadoPor('')
-        setFechaRegistro('')
+        setResponsable('')
+        setSupervisor('')
+        setFechaRegistro(formatDate(new Date()))
         setFechaOptima('')
         setFechaLimite('')
         setDescripcion('')
@@ -49,8 +64,8 @@ const Formulario = () => {
         setModoEdicion(true)
         setId(tarea.id)
         setTarea(tarea.tarea)
-        setPersonaCargo(tarea.personaCargo)
-        setCreadoPor(tarea.creadoPor)
+        setResponsable(tarea.responsable)
+        setSupervisor(tarea.supervisor)
         setFechaRegistro(tarea.fechaRegistro)
         setFechaOptima(tarea.fechaOptima)
         setFechaLimite(tarea.fechaLimite)
@@ -63,11 +78,11 @@ const Formulario = () => {
             setError('Debe ingresar la tarea a registrar')
             return;
         }
-        if (personaCargo === '' || personaCargo.trim() === '') {
+        if (responsable === '' || responsable.trim() === '') {
             setError('Debe ingresar la persona a cargo de la tarea')
             return;
         }
-        if (creadoPor === '' || creadoPor.trim() === '') {
+        if (supervisor === '' || supervisor.trim() === '') {
             setError('Debe ingresar la persona que reporta la incidencia')
             return;
         }
@@ -92,12 +107,13 @@ const Formulario = () => {
         try {
             const tareaEditada = {
                 tarea,
-                personaCargo,
-                creadoPor,
+                responsable,
+                supervisor,
                 fechaRegistro,
                 fechaOptima,
                 fechaLimite,
-                descripcion
+                descripcion,
+                completado: false
             }
             const db = firebase.firestore()
             await db.collection('ListaTareas').doc(id).update(tareaEditada)
@@ -108,9 +124,9 @@ const Formulario = () => {
 
             setListaTareas(arrayEditado)
             setTarea('')
-            setPersonaCargo('')
-            setCreadoPor('')
-            setFechaRegistro('')
+            setResponsable('')
+            setSupervisor('')
+            setFechaRegistro(formatDate(new Date()))
             setFechaOptima('')
             setFechaLimite('')
             setDescripcion('')
@@ -137,18 +153,20 @@ const Formulario = () => {
             setError('Debe ingresar la tarea a registrar')
             return;
         }
-        if (personaCargo === '' || personaCargo.trim() === '') {
-            setError('Debe ingresar la persona a cargo de la tarea')
+        if (responsable === '' || responsable.trim() === '') {
+            setError('Debe ingresar la persona responsable de la tarea')
             return;
         }
-        if (creadoPor === '' || creadoPor.trim() === '') {
+        if (supervisor === '' || supervisor.trim() === '') {
             setError('Debe ingresar la persona que reporta la incidencia')
             return;
         }
+
         if (fechaRegistro === '' || fechaRegistro.trim() === '') {
             setError('Debe ingresar la fecha de registro')
             return;
         }
+
         if (fechaOptima === '' || fechaOptima.trim() === '') {
             setError('Debe ingresar la fecha optima')
             return;
@@ -167,21 +185,22 @@ const Formulario = () => {
             const db = firebase.firestore()
             const NuevaTarea = {
                 tarea,
-                personaCargo,
-                creadoPor,
+                responsable,
+                supervisor,
                 fechaRegistro,
                 fechaOptima,
                 fechaLimite,
-                descripcion
+                descripcion,
+                completado: false
             }
 
             await db.collection('ListaTareas').add(NuevaTarea);
-            setListaTareas([...listaTareas, NuevaTarea])
+            setBanderaCrear((banderaCrear+1))
 
             setTarea('')
-            setPersonaCargo('')
-            setCreadoPor('')
-            setFechaRegistro('')
+            setResponsable('')
+            setSupervisor('')
+            setFechaRegistro(formatDate(new Date()))
             setFechaOptima('')
             setFechaLimite('')
             setDescripcion('')
@@ -193,20 +212,33 @@ const Formulario = () => {
 
     }
 
+    const completarTarea = async (tareaCompletada) => {
+        try {
+            const tareaEditada = {
+                tarea: tareaCompletada.tarea,
+                responsable: tareaCompletada.responsable,
+                supervisor: tareaCompletada.supervisor,
+                fechaRegistro: tareaCompletada.fechaRegistro,
+                fechaOptima: tareaCompletada.fechaOptima,
+                fechaLimite: tareaCompletada.fechaLimite,
+                descripcion: tareaCompletada.descripcion,
+                completado: true
+            }
 
-    const formatDate = (date) => {
-        let d = new Date(date),
-            month = '' + (d.getMonth() + 1),
-            day = '' + d.getDate(),
-            year = d.getFullYear();
+            const db = firebase.firestore()
+            await db.collection('ListaTareas').doc(tareaCompletada.id).update(tareaEditada)
 
-        if (month.length < 2)
-            month = '0' + month;
-        if (day.length < 2)
-            day = '0' + day;
+            const arrayEditado = listaTareas.map(
+                item => item.id === id ? tareaEditada : item
+            )
 
-        return [year, month, day].join('-');
+            setListaTareas(arrayEditado)
+
+        } catch (error) {
+            console.error(error)
+        }
     }
+
     return (
         <div className='container'>
             <h1 className='text-center mt-4'>Registro de Tareas</h1>
@@ -229,21 +261,21 @@ const Formulario = () => {
                             onChange={(e) => setTarea(e.target.value)}
                             value={tarea}
                         />
-                        <label htmlFor="personaCargo" className='col-12'> <h5>Responsable: </h5></label>
-                        <input id='personaCargo'
+                        <label htmlFor="responsable" className='col-12'> <h5>Responsable: </h5></label>
+                        <input id='responsable'
                             className='form-control mb-2'
                             type="text"
-                            placeholder='Ingrese la Persona a Cargo'
-                            onChange={(e) => setPersonaCargo(e.target.value)}
-                            value={personaCargo}
+                            placeholder='Ingrese la Persona Responsable'
+                            onChange={(e) => setResponsable(e.target.value)}
+                            value={responsable}
                         />
-                        <label htmlFor="reportadoPor" className='col-12'> <h5>Supervisado por: </h5></label>
-                        <input id='reportadoPor'
+                        <label htmlFor="supervisor" className='col-12'> <h5>Supervisado por: </h5></label>
+                        <input id='supervisor'
                             className='form-control mb-2'
-                            placeholder='Incidencia reportada por'
+                            placeholder='Ingrese el Supervisor a Cargo'
                             type="text"
-                            onChange={(e) => setCreadoPor(e.target.value)}
-                            value={creadoPor}
+                            onChange={(e) => setSupervisor(e.target.value)}
+                            value={supervisor}
                         />
                         <label htmlFor="fechaRegistro" className='col-12'> <h5>Fecha de Registro: </h5></label>
                         <input id='fechaRegistro'
@@ -251,7 +283,7 @@ const Formulario = () => {
                             placeholder='Ingrese Fecha de Registro'
                             type="date"
                             onChange={(e) => setFechaRegistro(e.target.value)}
-                            value={formatDate(fechaRegistro)}
+                            value={fechaRegistro}
 
                         />
                         <label htmlFor="fechaOptima" className='col-12'> <h5>Fecha Optima de Entrega: </h5></label>
@@ -304,27 +336,30 @@ const Formulario = () => {
                 <div className="col-4 offset-md-9">
                     <h1 className='text-center mt-4'>Tareas Registradas</h1>
                     <ul className='list-group text-white'>
-                    {
-                        listaTareas.map(tarea => (
-                            <div className='py-2 row 'key={tarea.id}>
-                            <li className='list-group-item fondo' >
-                                <p className="fw-bold fs-5">Tarea: <span className='lead'>{tarea.tarea}</span></p>
-                                <p className="fw-bold fs-5">Persona a Cargo: <span className='lead'>{tarea.personaCargo}</span></p>
-                                <p className="fw-bold fs-5">Reportado por: <span className='lead'>{tarea.creadoPor}</span></p>
-                                <p className="fw-bold fs-5">Fecha de Registro: <span className='lead'>{tarea.fechaRegistro}</span></p>
-                                <p className="fw-bold fs-5">Fecha Optima de Entrega: <span className='lead'>{tarea.fechaOptima}</span></p>
-                                <p className="fw-bold fs-5">Fecha Limite de Entrega: <span className='lead'>{tarea.fechaLimite}</span></p>
-                                <p className="fw-bold fs-5">Descripcion: <span className='lead'>{tarea.descripcion}</span></p>
-                                <button className='btn btn-danger btn-sm float-end mx-2 fw-bold ' onClick={()=> eliminarTareas(tarea.id)}>
-                                Eliminar
-                                </button>
-                                <button className='btn btn-warning btn-sm float-end fw-bold 'onClick={()=>editar(tarea)}>
-                                Editar
-                                </button>
-                            </li> 
-                            </div>  
+                        {
+                            listaTareas.filter(tarea => !tarea.completado).map(tarea => (
+                                <div className='py-2 row ' key={tarea.id}>
+                                    <li className='list-group-item fondo' >
+                                        <p className="fw-bold fs-5">Tarea: <span className='lead'>{tarea.tarea}</span></p>
+                                        <p className="fw-bold fs-5">Responsable: <span className='lead'>{tarea.responsable}</span></p>
+                                        <p className="fw-bold fs-5">Supervisor: <span className='lead'>{tarea.supervisor}</span></p>
+                                        <p className="fw-bold fs-5">Fecha de Registro: <span className='lead'>{tarea.fechaRegistro}</span></p>
+                                        <p className="fw-bold fs-5">Fecha Optima de Entrega: <span className='lead'>{tarea.fechaOptima}</span></p>
+                                        <p className="fw-bold fs-5">Fecha Limite de Entrega: <span className='lead'>{tarea.fechaLimite}</span></p>
+                                        <p className="fw-bold fs-5">Descripcion: <span className='lead'>{tarea.descripcion}</span></p>
+                                        <button className='btn btn-danger btn-sm float-end mx-2 fw-bold ' onClick={() => eliminarTareas(tarea.id)}>
+                                            Eliminar
+                                        </button>
+                                        <button className='btn btn-warning btn-sm float-end fw-bold ' onClick={() => editar(tarea)}>
+                                            Editar
+                                        </button>
+                                        <button className='btn btn-success btn-sm float-end mx-2 fw-bold ' onClick={() => completarTarea(tarea)}>
+                                            Completar
+                                        </button>
+                                    </li>
+                                </div>
                             ))
-                    }
+                        }
                     </ul>
                 </div>
             </div>
