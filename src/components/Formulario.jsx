@@ -229,9 +229,8 @@ const Formulario = () => {
             await db.collection('ListaTareas').doc(tareaCompletada.id).update(tareaEditada)
 
             const arrayEditado = listaTareas.map(
-                item => item.id === id ? tareaEditada : item
+                item => item.id === tareaCompletada.id ? tareaEditada : item
             )
-
             setListaTareas(arrayEditado)
 
         } catch (error) {
